@@ -1,0 +1,2 @@
+# 页面为脚本生成的单文件产物，折叠 diff 以免仓库膨胀
+index.html linguist-generated=true -diff

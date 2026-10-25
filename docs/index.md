@@ -17,9 +17,9 @@ description: 把「AI 改进 AI」拆成可以核对的部分：论文、源码�
 <a class="btn" href="./explore/rsigym.html" target="_blank">打开轨迹浏览器 ↗</a>
 </div>
 <div class="home-stats">
-<div class="s"><div class="k">已收录</div><div class="v">2</div><div class="d">1 篇深读 · 1 篇导读</div></div>
+<div class="s"><div class="k">已收录</div><div class="v">2</div><div class="d">2 篇深读 · 25 条批判</div></div>
 <div class="s"><div class="k">轨迹步数</div><div class="v">7,098</div><div class="d">18 次运行 · 8,392 次工具调用</div></div>
-<div class="s"><div class="k">批判条目</div><div class="v">13</div><div class="d">每条标注证据来源</div></div>
+<div class="s"><div class="k">批判条目</div><div class="v">25</div><div class="d">13 + 12 · 每条标注证据来源</div></div>
 <div class="s"><div class="k">证据维度</div><div class="v">3</div><div class="d">论文 / 源码 / 轨迹</div></div>
 </div>
 </div>
@@ -34,10 +34,10 @@ description: 把「AI 改进 AI」拆成可以核对的部分：论文、源码�
 <div class="go">读全文 · 约 18 分钟 →</div>
 </a>
 <a class="work" href="./works/harness2.html">
-<div class="top"><span class="badge">导读</span><span>Google Research / 西北大学</span><span>2026-10</span></div>
+<div class="top"><span class="badge">深读</span><span>Google Research / 西北大学</span><span>2026-10</span></div>
 <h3>Harness²</h3>
-<p>不改模型权重，只改模型外面那层运行框架；没有验证器时，用「提议—探测—组合」的对比证据来指导编辑，并把改进经验沉淀成库供下一个任务复用。</p>
-<div class="go">读导读 · 约 8 分钟 →</div>
+<p>不改模型权重，只改模型外面那层运行框架；没有验证器时，用「提议—探测—组合」的对比证据来指导编辑，并把改进经验沉淀成库供下一个任务复用。一句话结论：方向诚实，但 +11.5 分的基线是一套空配置。</p>
+<div class="go">读全文 · 约 20 分钟 →</div>
 </a>
 </div>
 </section>

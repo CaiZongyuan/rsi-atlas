@@ -28,7 +28,7 @@ description: 按「改什么 / 怎么判断 / 递归到哪一层 / 能不能复�
 </table>
 </div>
 
-<p class="small" style="margin-top:12px">「已核验」指我读过论文与仓库；RSIGym 还额外读了 18 条轨迹。Harness² 目前只到论文一级，仓库待核。</p>
+<p class="small" style="margin-top:12px">「已核验」指我读过论文与仓库；RSIGym 还额外读了 18 条轨迹。两篇现在都到源码一级；Harness² 无公开轨迹，代码自曝是唯一深挖渠道。</p>
 
 ## 怎么读
 

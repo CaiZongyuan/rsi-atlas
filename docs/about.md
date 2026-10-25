@@ -25,8 +25,9 @@ description: RSI Atlas 是什么、不是什么，以及更新日志。
 
 | 日期 | 内容 |
 |---|---|
-| 2026-10-25 | 站点上线：RSIGym 深读（含 13 条批判）、Harness² 导读、横向对比、轨迹浏览器 |
-| — | 下一步：核验 Harness² 源码；给 RSIGym 补 $1000 预算与 Data / Harness 赛道的轨迹 |
+| 2026-10-25 | 站点上线：RSIGym 深读（13 条批判）、横向对比、轨迹浏览器 |
+| 2026-10-25 | Harness² 升级为深读：读完 google-research/harness2 仓库（114 文件），补 12 条源码级批判 |
+| — | 下一步：给 RSIGym 补 $1000 预算与 Data / Harness 赛道的轨迹；提名第三个收录对象 |
 
 ## 反馈
 

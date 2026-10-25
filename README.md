@@ -11,7 +11,7 @@
 | 工作 | 深度 | 证据 |
 |---|---|---|
 | **RSIGym**（arXiv 2610.10310） | 深读 | 论文 ✓ 源码 ✓ 18 条轨迹 ✓ |
-| **Harness²**（Google Research / 西北大学） | 导读 | 论文 ✓ 源码 待核 |
+| **Harness²**（Google Research / 西北大学） | 深读 | 论文 ✓ 源码 ✓（12 条批判） |
 
 ## 站点结构
 
@@ -21,7 +21,7 @@ docs/
 ├── works/
 │   ├── index.md          收录总览
 │   ├── rsigym.md         RSIGym 深读（8 章 · 13 条批判）
-│   └── harness2.md       Harness² 导读
+│   └── harness2.md       Harness² 深读（7 章 · 12 条批判）
 ├── compare/index.md      横向对比矩阵
 ├── method.md             分析方法（三把尺子 + 证据标记）
 ├── about.md              关于 / 更新日志 / 许可

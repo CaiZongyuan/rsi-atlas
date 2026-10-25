@@ -17,10 +17,10 @@ description: RSI Atlas 收录的所有工作：每篇都按论文、源码、轨
     <div class="go">论文 ✓ · 源码 ✓ · 18 条轨迹 ✓　→</div>
   </a>
   <a class="work" href="./harness2.html">
-    <div class="top"><span class="badge">导读</span><span>Harness²</span><span>Google Research / 西北大学</span></div>
+    <div class="top"><span class="badge">深读</span><span>Harness²</span><span>Google Research / 西北大学</span></div>
     <h3>Harness²</h3>
     <p>不改模型权重，只改模型外面那层运行框架。没有验证器时，用「提议—探测—组合」产生的行为对比来指导编辑；再把改进过程本身沉淀成经验库，供下一个任务复用。</p>
-    <div class="go">论文 ✓ · 源码 待核 · 轨迹 不公开　→</div>
+    <div class="go">论文 ✓ · 源码 ✓（12 条批判）　→</div>
   </a>
 </div>
 

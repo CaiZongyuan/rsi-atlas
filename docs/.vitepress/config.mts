@@ -42,7 +42,7 @@ export default defineConfig({
           items: [
             { text: '总览', link: '/works/' },
             { text: 'RSIGym · 深读', link: '/works/rsigym' },
-            { text: 'Harness² · 导读', link: '/works/harness2' },
+            { text: 'Harness² · 深读', link: '/works/harness2' },
           ],
         },
         {

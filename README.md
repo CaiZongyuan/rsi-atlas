@@ -1,68 +1,65 @@
-# RSIGym 深读 · Deep Read
+# RSI Atlas
 
-> 当 AI 开始改进 AI，证据链够不够硬？
+> 递归自我改进（RSI）的图谱：把「AI 改进 AI」拆成可以核对的部分。
 
-一份**不依赖原论文**的中文长文，把 **论文正文**、**GitHub 源码**和 **18 条真实研究轨迹**摆在一起，逐条核对 RSIGym 证明了什么、没证明什么。
+在线站点：**https://caizongyuan.github.io/rsi-atlas/**
 
-在线地址：**https://caizongyuan.github.io/rsigym-deep-read/**
+一个关于 RSI 的独立阅读站。每收录一个工作，就用三种证据交叉核对：**论文说了什么、代码怎么做的、真实运行留下了什么**。
 
----
+## 已收录
 
-## 这是什么
-
-RSIGym（arXiv 2610.10310）把训练、推理、采样、评测、沙箱封装成带预算与权限的微服务，让研究智能体自己去改数据、改训练配方、改写执行框架，并用 RSI-Index 给六个前沿模型排名。
-
-这份页面做三件事：
-
-1. **把实验讲清楚** —— 背景、五服务机制、三条赛道的权限差异、智能体看到的完整任务书（中英对照全译）、被改进系统的 95 行起点、五项基准各考什么。零基础读者不用翻论文。
-2. **把轨迹翻一遍** —— 从 7,098 步、8,392 次工具调用里找出五件论文没写的事：钱花在缓存写而不是思考、62–93% 墙钟在阻塞等待、评测普遍只跑 2–10 道题、67 次训练提交多数没赢过基座、交付物常在最后 1–5 步才定档。
-3. **把结论摆上台面** —— 13 条批判，按严重程度分级，每条都标注证据来源（论文段落 / 源码文件与行号 / 轨迹步号），并给出「需要什么证据才能补上」。
-
-页面顶部的**轨迹浏览器**可以逐条翻看 18 次运行的每一步：工具筛选、关键词搜索、节奏条跳转、自评分曲线。
-
-## 内容结构
-
-| # | 章节 | 关键内容 |
+| 工作 | 深度 | 证据 |
 |---|---|---|
-| 01 | 问题 | RSI 的严格定义 vs 论文实际测的单周期 |
-| 02 | 机制 | 五服务、三赛道权限矩阵、预算记账（附零基础术语表） |
-| 03 | 任务 | Joint 赛道 instruction 原文 + 全译、三项硬约束、五项基准说明 |
-| 04 | 起点 | 95 行 harness、39 行 main.py、判定不看 stdout |
-| 05 | 结果 | RSI-Index 公式与全表、三个口径纠正 |
-| 06 | 轨迹 | 五件只有轨迹里才看得到的事 |
-| 07 | 批判 | 13 条，分致命 / 重要 / 实用提醒 |
-| 08 | 复盘 | 如果重写这篇论文，六件事该怎么改 |
+| **RSIGym**（arXiv 2610.10310） | 深读 | 论文 ✓ 源码 ✓ 18 条轨迹 ✓ |
+| **Harness²**（Google Research / 西北大学） | 导读 | 论文 ✓ 源码 待核 |
 
-## 数据与证据
-
-- **论文**：`RSIGym：面向递归自我改进的灵活环境`（arXiv 2610.10310 中文版）
-- **源码**：<https://github.com/evolvent-ai/RSIGym>（1,347 个文件，5,810 行 Python）
-- **轨迹**：公开数据集 *RSIGym Research Trajectories* 的 part-01，18 个实验 JSON（41 次计分运行中的 18 次）
-
-所有自行复算的数字都有可重跑脚本（`extract.py` → `data.json` → 页面）。凡是数据中不可见的内容，正文写「不可见」而不是猜。
-
-三条值得单独记住的发现：
-
-- `final_metrics.total_cost_usd` 是**编排器自身开销，按论文口径不计入 500 美元预算**；平台真实消耗只在轨迹的 `/v1/balance` 里（18 次合计 **$5,960**，自报字段合计 **$1,113**，中位差 8.1 倍）。
-- 首个评测 JobConfig 常见 `n_tasks: 2 / 5 / 8 / 10`，`n_attempts` 只用过 1/2/3 —— 自评与官方分最大差 **13 个百分点**。
-- 18 个 `official_job_id` 在轨迹正文命中 **0 次**，官方打分过程不在录像范围内。
-
-## 技术说明
-
-- **单文件、零依赖**：`index.html` 是一个 6.3MB 的自包含页面，可直接双击离线打开，也可托管在任意静态服务器。
-- 轨迹数据以 **gzip + base64** 内嵌，运行时用 `DecompressionStream('gzip')` 解压，因此需要 Chrome / Edge 80+、Safari 16.4+。
-- 图表是手写 SVG，轨迹浏览器是原生 JS，无框架、无 CDN、无字体外链。
-
-## 本地打开
+## 站点结构
 
 ```
-双击 index.html
-# 或
-python -m http.server 8000   # 然后访问 http://localhost:8000
+docs/
+├── index.md              首页
+├── works/
+│   ├── index.md          收录总览
+│   ├── rsigym.md         RSIGym 深读（8 章 · 13 条批判）
+│   └── harness2.md       Harness² 导读
+├── compare/index.md      横向对比矩阵
+├── method.md             分析方法（三把尺子 + 证据标记）
+├── about.md              关于 / 更新日志 / 许可
+└── public/
+    ├── explore/rsigym.html  轨迹浏览器（独立页，按需加载数据）
+    └── data/rsigym.json.gz  18 次运行的精简轨迹（4.5MB，gzip）
 ```
 
-深链格式：`index.html#run=<run-name>&f=eval&step=<i>`（`f` 可选 `eval` / `err` / `narr`）。
+## 本地开发
 
-## 许可与致谢
+```bash
+pnpm install
+pnpm dev      # http://localhost:5173/rsi-atlas/
+pnpm build    # 产物在 docs/.vitepress/dist
+pnpm preview
+```
 
-分析文本由本仓库作者撰写。原始论文、代码与轨迹数据的版权归 RSIGym 作者（Evolvent AI / 新加坡国立大学）所有；RSIGym 代码仓库采用 **CC BY-NC 4.0**，本页面为非商业性的独立评述，引用其公开数据与结论，不代表原作者观点。
+需要 Node 22+ 与 pnpm 11。
+
+## 新增一篇收录
+
+1. 在 `docs/works/` 下新建 `<name>.md`，frontmatter 写 `title` 与 `description`；
+2. 正文用 `##` / `###` 组织章节（右侧目录会自动生成）；
+3. 结论处标注证据类型：`<span class="ev paper">论文</span>` / `<span class="ev code">源码</span>` / `<span class="ev traj">轨迹</span>`；
+4. 在 `docs/.vitepress/config.mts` 的 sidebar 与 `docs/works/index.md` 里加条目。
+
+可复用的样式类：`.fig`（图表容器）、`.note` / `.note.warnbox`（提示框）、`.crit` + `.sev`（批判卡片）、`.evwrap`、`.tbl`、`.tracks`、`.two-col`、`pre.code`、`.hstats`。
+
+## 部署
+
+推送到 `main` 触发 `.github/workflows/deploy.yml`：pnpm 构建 → 上传 artifact → 部署到 GitHub Pages。
+
+> 注意：`config.mts` 里的 `base` 是 `/rsi-atlas/`。如果改仓库名，这里要同步改。
+
+## 数据来源与许可
+
+- 论文、代码、轨迹的版权归各自作者所有；
+- RSIGym 代码仓库为 CC BY-NC 4.0，本站为非商业性评述；
+- 站点文本采用 CC BY-NC 4.0。
+
+引用本站结论时，请连同证据类型一起引（论文 / 源码 / 轨迹），原因见[分析方法](https://caizongyuan.github.io/rsi-atlas/method)。

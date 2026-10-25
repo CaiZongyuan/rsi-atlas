@@ -1,0 +1,15 @@
+{
+  "name": "rsi-atlas",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "RSI Atlas · 递归自我改进的图谱：论文 / 源码 / 轨迹三方对照",
+  "scripts": {
+    "dev": "vitepress dev docs",
+    "build": "vitepress build docs",
+    "preview": "vitepress preview docs"
+  },
+  "devDependencies": {
+    "vitepress": "^1.6.4"
+  }
+}

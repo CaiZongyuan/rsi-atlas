@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RSIGym 轨迹浏览器 · RSI Atlas</title>
+<style>
+:root{
+  --ground:#121211;--ground-2:#0d0d0c;--surface:#181816;--surface-2:#201f1d;
+  --line:#292825;--line-2:#383632;--ghost:#4f4d47;
+  --ink:#efede7;--ink-2:#d3d0c8;--muted:#a3a097;--faint:#827f76;
+  --accent:#9ca4ff;--accent-ink:#bcc1ff;--ok:#88c49c;--warn:#e2b25d;--bad:#f2766a;
+  --display:"Iowan Old Style","Palatino Linotype","Source Han Serif SC","Noto Serif CJK SC","Songti SC","STSong",serif;
+  --ui:"IBM Plex Sans","PingFang SC","Hiragino Sans GB","Microsoft YaHei",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink-2);font-family:var(--ui);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased}
+::selection{background:#3a3a63;color:#fff}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#2a2926;border-radius:8px;border:2px solid var(--ground)}
+a{color:var(--accent);text-decoration:none}
+a:hover{color:var(--accent-ink)}
+
+.topbar{position:fixed;top:0;left:0;right:0;height:52px;z-index:100;display:flex;align-items:center;gap:14px;
+  padding:0 20px;background:linear-gradient(180deg,#121211 72%,rgba(18,18,17,.94));
+  border-bottom:1px solid var(--line);backdrop-filter:blur(14px)}
+.topbar .bk{font-family:var(--mono);font-size:11.5px;color:var(--faint)}
+.topbar .bk:hover{color:var(--ink-2)}
+.topbar .ttl{font-family:var(--display);font-size:15px;color:var(--ink)}
+.topbar .sp{flex:1}
+.topbar .hint{font-family:var(--mono);font-size:10.5px;color:var(--ghost)}
+
+.x-side{position:fixed;top:52px;bottom:0;left:0;width:272px;z-index:50;background:rgba(13,13,12,.94);
+  border-right:1px solid var(--line);overflow-y:auto;padding:14px 10px 40px}
+.x-grp{margin-bottom:16px}
+.x-gh{display:flex;align-items:baseline;gap:7px;padding:8px 8px 6px;font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--faint);text-transform:uppercase}
+.x-gh b{font-family:var(--ui);font-size:12px;letter-spacing:0;color:var(--muted);font-weight:500;text-transform:none}
+.x-gh i{margin-left:auto;font-style:normal;font-family:var(--mono);font-size:10px;color:var(--ghost)}
+.x-run{display:grid;grid-template-columns:7px 1fr auto;gap:9px;align-items:center;width:100%;text-align:left;background:none;
+  border:1px solid transparent;border-radius:9px;padding:8px 9px;cursor:pointer;color:var(--muted);font:inherit;transition:.15s;margin-bottom:1px}
+.x-run:hover{background:#1b1a18}
+.x-run.on{background:linear-gradient(90deg,#22212c,#1a1917);border-color:#3b3a52;color:var(--ink)}
+.x-run .d{width:6px;height:6px;border-radius:50%;background:var(--c);box-shadow:0 0 8px color-mix(in srgb,var(--c) 60%,transparent)}
+.x-run .nm{font-size:12.5px;color:var(--ink-2);line-height:1.3}
+.x-run.on .nm{color:var(--ink)}
+.x-run .sb{font-family:var(--mono);font-size:10px;color:var(--faint)}
+.x-run .sc{font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--ground-2);border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+.x-run.on .sc{color:var(--ok);border-color:#2c3f33}
+.x-main{margin:52px 0 0 272px;min-height:calc(100vh - 52px)}
+.x-wrap{max-width:1180px;margin:0 auto;padding:26px 30px 90px}
+.x-hd{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.x-hd h1{font-family:var(--display);font-size:26px;margin:0;color:var(--ink)}
+.x-chip{display:inline-flex;gap:5px;align-items:center;font-family:var(--mono);font-size:11px;background:var(--surface);
+  border:1px solid var(--line);border-radius:999px;padding:2px 9px;color:var(--faint)}
+.x-chip b{color:var(--ink-2);font-weight:400}
+.x-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.x-kpis{display:grid;grid-template-columns:repeat(6,1fr);border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface);margin:18px 0 0}
+.x-kpi{padding:12px 14px;border-right:1px solid var(--line)}
+.x-kpi:last-child{border-right:0}
+.x-kpi .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:var(--faint);text-transform:uppercase;white-space:nowrap}
+.x-kpi .v{font-family:var(--mono);font-size:15px;color:var(--ink);margin-top:3px;white-space:nowrap}
+.x-kpi .v small{font-size:10px;color:var(--faint);margin-left:3px}
+.x-good{color:var(--ok)}
+.x-strip{position:sticky;top:52px;z-index:40;background:rgba(18,18,17,.95);backdrop-filter:blur(10px);
+  border:1px solid var(--line);border-radius:12px;padding:8px 12px 5px;margin:16px 0 12px;box-shadow:0 14px 30px -22px #000}
+.x-strip .cap{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--faint);margin-bottom:4px;letter-spacing:.04em}
+#x-barcode{display:block;width:100%;height:26px;cursor:crosshair;border-radius:5px}
+#x-ctx{display:block;width:100%;height:62px;margin-top:2px}
+.x-two{display:grid;grid-template-columns:1.3fr 1fr;gap:14px;margin-bottom:16px}
+.x-panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+.x-panel h2{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:var(--faint);text-transform:uppercase;margin:0 0 10px;font-weight:400}
+.x-trow{display:grid;grid-template-columns:92px 1fr 40px;gap:9px;align-items:center;font-size:11.5px;margin-bottom:6px}
+.x-trow .tn{font-family:var(--mono);font-size:10.5px;text-align:right;color:var(--muted)}
+.x-trow .tb{height:5px;background:#242320;border-radius:4px;overflow:hidden}
+.x-trow .tb i{display:block;height:100%;border-radius:4px}
+.x-trow .tv{font-family:var(--mono);font-size:10px;color:var(--faint);text-align:right}
+.x-grid4{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line);font-size:11.5px;color:var(--faint)}
+.x-grid4 b{display:block;font-family:var(--mono);font-size:12.5px;color:var(--ink-2);margin-top:2px;font-weight:400}
+.x-how{font-size:12.5px;color:var(--muted);line-height:1.9}
+.x-how b{color:var(--ink-2)}
+.x-ctrl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 14px}
+.x-fbtn{background:var(--surface);border:1px solid var(--line);color:var(--muted);border-radius:7px;padding:4px 10px;
+  font:inherit;font-size:11.5px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:.14s}
+.x-fbtn:hover{border-color:var(--line-2);color:var(--ink-2)}
+.x-fbtn.on{background:#26253a;border-color:#454472;color:#c7cbff}
+.x-fbtn .sw{width:6px;height:6px;border-radius:2px;background:var(--c)}
+.x-search{flex:1;min-width:180px;background:var(--ground-2);border:1px solid var(--line);border-radius:7px;padding:6px 11px;
+  color:var(--ink);font:inherit;font-size:12.5px;outline:none}
+.x-search:focus{border-color:var(--line-2);box-shadow:0 0 0 3px rgba(156,164,255,.08)}
+.x-cnt{font-family:var(--mono);font-size:11px;color:var(--faint);white-space:nowrap}
+.x-tl{position:relative}
+.x-step{display:grid;grid-template-columns:44px 1fr;position:relative;content-visibility:auto;contain-intrinsic-size:auto 170px}
+.x-gut{position:relative;padding-top:12px;text-align:right;padding-right:12px}
+.x-gut .ix{font-family:var(--mono);font-size:10px;color:var(--ghost)}
+.x-gut .ln{position:absolute;right:8px;top:0;bottom:0;width:1px;background:var(--line)}
+.x-gut .pt{position:absolute;right:4.5px;top:17px;width:8px;height:8px;border-radius:50%;background:var(--ground);border:2px solid var(--bar,#3a3730)}
+.x-step.onpt .pt{background:var(--bar);box-shadow:0 0 10px var(--bar)}
+.x-card{border:1px solid var(--line);background:var(--surface);border-left:2px solid var(--bar,#2a2825);border-radius:10px;margin:0 0 9px;overflow:hidden;transition:.14s}
+.x-card:hover{border-color:var(--line-2);border-left-color:var(--bar);background:#1b1a17}
+.x-card.sys{opacity:.78;background:#141412}
+.x-card.sys .said{-webkit-line-clamp:2;color:#b3b0a7}
+.x-card .hd{display:flex;align-items:center;gap:7px;padding:8px 12px 0;flex-wrap:wrap}
+.x-card .tool{font-family:var(--mono);font-size:10px;padding:1px 7px;border-radius:4px;color:var(--bar);
+  background:color-mix(in srgb,var(--bar) 13%,transparent);border:1px solid color-mix(in srgb,var(--bar) 32%,transparent)}
+.x-card .t{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--ghost)}
+.x-card .bd{padding:4px 14px 11px 12px}
+.said{font-size:13.5px;color:#dcd9d2;line-height:1.7;margin-top:3px;white-space:pre-wrap;word-break:break-word;
+  display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
+.think{margin:7px 0 0;padding:6px 10px 6px 11px;border-left:2px solid #3b3350;background:var(--ground-2);border-radius:0 7px 7px 0}
+.think .lb{font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:#80749e;text-transform:uppercase}
+.think p{margin:2px 0 0;color:#a9a49a;font-size:12px;line-height:1.6;white-space:pre-wrap;word-break:break-word;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.x-card pre{margin:7px 0 0;font-family:var(--mono);font-size:11.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word;
+  padding:7px 10px;border-radius:7px;display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden}
+.x-card .cmd{background:#0c0c0b;border:1px solid #24231f;color:#9ec4b4;-webkit-line-clamp:4}
+.x-card .cmd .d{color:#4b5b52;user-select:none}
+.x-card .obs{background:#0e0e0c;border:1px solid #232220;color:#9a968d;-webkit-line-clamp:5}
+.x-card .obs.err{color:#c08a83;border-color:#3a2521;background:#140f0e}
+.x-card.open .said,.x-card.open .think p,.x-card.open .cmd,.x-card.open .obs{-webkit-line-clamp:unset;display:block;overflow:visible}
+.x-card.open{border-color:var(--line-2)}
+.more{background:none;border:0;color:#6b6a92;font-size:11px;cursor:pointer;padding:5px 0 0;font-family:inherit}
+.more:hover{color:var(--accent)}
+.x-marker{display:flex;align-items:center;gap:10px;color:var(--faint);font-size:11px;margin:6px 0 12px;padding-left:44px}
+.x-marker:before,.x-marker:after{content:"";height:1px;background:var(--line);flex:1}
+.x-empty{color:var(--faint);text-align:center;padding:40px;font-size:13px}
+.x-leg{display:flex;gap:14px;flex-wrap:wrap;font-family:var(--mono);font-size:10px;color:var(--faint);margin-top:4px}
+.x-leg i{display:inline-block;width:6px;height:6px;border-radius:2px;margin-right:4px}
+.tagx{font-family:var(--mono);font-size:9.5px;padding:1px 5px;border-radius:3px;border:1px solid}
+.x-foot{margin-top:34px;color:var(--faint);font-size:11px;line-height:1.9;border-top:1px solid var(--line);padding-top:14px}
+#tip2{position:fixed;pointer-events:none;z-index:200;background:#0b0b0a;border:1px solid var(--line-2);border-radius:7px;
+  padding:6px 9px;font-size:11px;color:var(--ink);box-shadow:0 8px 30px #000a;max-width:320px;display:none;font-family:var(--mono)}
+.loading{position:fixed;inset:0;display:grid;place-items:center;color:var(--faint);font-size:13px;z-index:150;background:var(--ground)}
+@media(max-width:1180px){.x-kpis{grid-template-columns:repeat(3,1fr)}.x-two{grid-template-columns:1fr}}
+@media(max-width:900px){.x-side{display:none}.x-main{margin-left:0}}
+</style>
+</head>
+<body>
+<div class="loading" id="boot">正在加载轨迹数据（约 3.4MB）…</div>
+
+<div class="topbar">
+  <a class="bk" href="../works/rsigym.html">← RSIGym 深读</a>
+  <span class="ttl">轨迹浏览器</span>
+  <span class="sp"></span>
+  <span class="hint">18 次运行 · 7,098 步 · 数据按需加载</span>
+</div>
+
+<aside class="x-side" id="x-side"></aside>
+<div class="x-main">
+  <div class="x-wrap">
+    <div id="x-head"></div>
+    <div class="x-strip">
+      <div class="cap"><span>节奏条 · 一根竖线 = 一步，颜色 = 主要工具，红点 = 报错</span><span id="x-hover">悬停查看 · 点击跳转</span></div>
+      <canvas id="x-barcode"></canvas>
+      <canvas id="x-ctx"></canvas>
+      <div class="x-leg" id="x-leg"></div>
+    </div>
+    <div class="x-two">
+      <div class="x-panel">
+        <h2>轨迹构成</h2>
+        <div id="x-tools"></div>
+        <div class="x-grid4" id="x-stats"></div>
+      </div>
+      <div class="x-panel">
+        <h2>怎么读</h2>
+        <div class="x-how" id="x-how"></div>
+      </div>
+    </div>
+    <div id="x-score"></div>
+    <div class="x-ctrl">
+      <span style="font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--faint)">工具</span>
+      <span id="x-chips" style="display:flex;gap:6px;flex-wrap:wrap"></span>
+      <span style="width:1px;height:18px;background:var(--line)"></span>
+      <button class="x-fbtn" id="x-narr">仅叙述</button>
+      <button class="x-fbtn" id="x-err">仅错误</button>
+      <button class="x-fbtn" id="x-eval">仅评测提交</button>
+      <input class="x-search" id="x-q" placeholder="搜索 命令 / 输出 / 思考 …">
+      <span class="x-cnt" id="x-cnt"></span>
+    </div>
+    <div class="x-tl" id="x-tl"></div>
+    <div id="x-sent" style="height:60px"></div>
+    <div class="x-foot" id="x-foot"></div>
+  </div>
+</div>
+<div id="tip2"></div>
+
+<script>
+const BENCH_FULL={SWE:"SWE-bench Verified",TB2:"Terminal-Bench 2.0",AIME:"AIME 2024/2025",GPQA:"GPQA Diamond",Skills:"SkillsBench"};
+const AGENT_COLOR={"Opus 5":"#9ca4ff","Opus 5.5":"#c9a0ff","DeepSeek":"#88c49c","Astra":"#e2b25d"};
+const AGENT_ORDER=["Opus 5","Opus 5.5","DeepSeek","Astra"];
+const DISP={Narrate:"叙述",User:"任务",System:"系统",Other:"其他"};
+let RUNS=[],cur=0,S={tools:new Set(),onlyErr:false,narr:false,onlyEval:false,q:"",rendered:0,start:0,filtered:[],run:-1};
+const gap=r=>(r.score-r.base)/(1-r.base);
+const pct=x=>(x*100).toFixed(1);
+const fmtNum=n=>{if(!n&&n!==0)return"—";if(n>=1e9)return(n/1e9).toFixed(2)+"B";if(n>=1e6)return(n/1e6).toFixed(1)+"M";if(n>=1e3)return(n/1e3).toFixed(1)+"K";return""+n};
+const esc=s=>(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmtDur=s=>{if(s==null)return"—";const h=Math.floor(s/3600),m=Math.round(s%3600/60);return h>0?h+"h "+m+"m":m+"m"};
+
+function toolOf(st){return st.tools&&st.tools.length?st.tools[0].n:(st.msg?(st.src==="user"?"User":st.src==="system"?"System":"Narrate"):"System")}
+function catOf(n){if(n==="Narrate"||n==="System"||n==="User")return n;
+  if(n==="Bash"||n==="exec")return "Bash";if(n==="Read")return "Read";
+  if(n==="Write"||n==="Edit"||n==="apply_patch")return "Write";
+  if(n==="WebSearch"||n==="WebFetch")return "Web";if(n==="Agent"||n==="Task")return "Agent";
+  if(n==="sleep")return "sleep";return "Other"}
+const catColor=c=>({Bash:"#8fc7bd",Read:"#8fa8d6",Write:"#e2b25d",Web:"#b6a3e8",Agent:"#e08fb0",
+  Skill:"#88c49c",sleep:"#6f6c65",Other:"#8a877e",Narrate:"#a3a097",System:"#5f5c55",User:"#d48fd0"}[c]||"#8a877e");
+const EVAL_RE=/\/v1\/jobs|job\.sh|\/jobs\/|harbor|BENCHMARK_SERVER/i;
+const TRAIN_RE=/tinker|\/v1\/train|train\.py|training/i;
+function tagsOf(st){const a=(st.tools||[]).map(t=>t.a).join(" ");const t=[];
+  if(st.err)t.push(["错误","#f2766a"]);if(EVAL_RE.test(a))t.push(["评测","#e2b25d"]);
+  if(TRAIN_RE.test(a))t.push(["训练","#c9a0ff"]);if(st.side)t.push(["子代理","#e08fb0"]);return t}
+
+(async function(){
+  try{
+    const res=await fetch("../data/rsigym.json.gz");
+    if(!res.ok)throw new Error("HTTP "+res.status);
+    // 部分静态服务器会为 .gz 设置 Content-Encoding: gzip，此时浏览器已解压过一次
+    const enc=(res.headers.get("content-encoding")||"").toLowerCase();
+    let txt;
+    if(enc.includes("gzip")){
+      txt=await res.text();
+    }else{
+      const buf=await res.arrayBuffer();
+      const stream=new Blob([buf]).stream().pipeThrough(new DecompressionStream("gzip"));
+      txt=await new Response(stream).text();
+    }
+    RUNS=JSON.parse(txt).runs;
+  }catch(e){
+    document.getElementById("boot").innerHTML="数据加载失败："+e.message+"<br><span style='font-size:11px'>请通过 http(s) 访问，file:// 下浏览器会拦截 fetch。</span>";
+    return;
+  }
+  RUNS.sort((a,b)=>AGENT_ORDER.indexOf(a.agent)-AGENT_ORDER.indexOf(b.agent)||
+    ["SWE","TB2","AIME","GPQA","Skills"].indexOf(a.bench)-["SWE","TB2","AIME","GPQA","Skills"].indexOf(b.bench));
+  cur=RUNS.findIndex(r=>r.name.indexOf("opus-5__aime")>0);if(cur<0)cur=0;
+  document.getElementById("boot").style.display="none";
+  const q=new URLSearchParams(location.hash.replace(/^#/,""));
+  if(q.get("run")!==null){
+    const v=q.get("run"),i=RUNS.findIndex(r=>r.name===v);
+    if(i>=0)cur=i;else if(!isNaN(+v)&&RUNS[+v])cur=+v;
+    const f=(q.get("f")||"").split(",");
+    if(f.includes("eval"))S.onlyEval=true;if(f.includes("err"))S.onlyErr=true;if(f.includes("narr"))S.narr=true;
+    S.run=cur;
+  }
+  renderSidebar();renderRun();
+  const st=q.get("step");if(st!==null)setTimeout(()=>jumpTo(+st),150);
+})();
+
+function renderSidebar(){
+  const by={};RUNS.forEach((r,i)=>{(by[r.agent]=by[r.agent]||[]).push([r,i])});
+  let h="";
+  AGENT_ORDER.forEach(a=>{
+    const l=by[a];if(!l)return;
+    const idx=l.reduce((s,[r])=>s+gap(r),0)/l.length;
+    h+=`<div class="x-grp"><div class="x-gh"><span style="width:6px;height:6px;border-radius:50%;background:${AGENT_COLOR[a]}"></span><b>${a}</b><i>RSI ${idx.toFixed(3)}</i></div>`;
+    l.forEach(([r,i])=>{h+=`<button class="x-run${i===cur?" on":""}" data-i="${i}" style="--c:${AGENT_COLOR[a]}">
+      <span class="d"></span><span><span class="nm">${BENCH_FULL[r.bench]}</span><br><span class="sb">+${pct(gap(r))}% 弥合 · ${r.n} 步</span></span>
+      <span class="sc">${(r.score*100).toFixed(1)}</span></button>`});
+    h+="</div>";
+  });
+  h+=`<div style="padding:10px;color:var(--faint);font-size:10.5px;line-height:1.8;border-top:1px solid var(--line);margin-top:6px">
+    18 次运行 · ${RUNS.reduce((s,r)=>s+r.n,0).toLocaleString()} 步<br>数据：RSIGym 公开轨迹（part-01）</div>`;
+  const el=document.getElementById("x-side");el.innerHTML=h;
+  el.querySelectorAll(".x-run").forEach(b=>b.onclick=()=>{cur=+b.dataset.i;renderSidebar();renderRun();window.scrollTo(0,0)});
+}
+function renderRun(){
+  const r=RUNS[cur],g=gap(r);
+  if(S.run!==cur){S.tools.clear();S.narr=false;S.onlyErr=false;S.onlyEval=false;S.q="";S.run=cur}
+  const cats={};Object.entries(r.tools).forEach(([k,v])=>{const c=catOf(k);cats[c]=(cats[c]||0)+v});
+  const mx=Math.max(...Object.values(cats),1);
+  let bars="";Object.entries(cats).sort((a,b)=>b[1]-a[1]).forEach(([c,v])=>{
+    bars+=`<div class="x-trow"><div class="tn" style="color:${catColor(c)}">${DISP[c]||c}</div>
+      <div class="tb"><i style="width:${v/mx*100}%;background:${catColor(c)}"></i></div><div class="tv">${v}</div></div>`});
+  let peak=0;r.steps.forEach(s=>{if((s.pin||0)>peak)peak=s.pin});
+  const waits=r.steps.filter(s=>{const t=(s.tools||[])[0];if(!t)return false;
+    if(t.n==="sleep")return true;return /(^|\s)sleep\s+\d|while\s+true|tail\s+-[0-9]/.test(t.a||"")}).length;
+
+  document.getElementById("x-head").innerHTML=`
+    <div class="x-hd"><h1>${r.agent} · ${BENCH_FULL[r.bench]}</h1>
+      <span class="x-chip" style="border-color:${AGENT_COLOR[r.agent]}44;color:${AGENT_COLOR[r.agent]}">${r.driver}</span></div>
+    <p style="color:var(--muted);font-size:13.5px;margin:8px 0 0">研究智能体 <b style="color:var(--ink-2)">${r.agent}</b>（${r.model_name||r.pmodel}）驱动 ${r.cli} v${r.cli_ver}，在 <b style="color:var(--ink-2)">$${r.budget}</b> 平台预算内改进目标系统。</p>
+    <div class="x-chips">
+      <span class="x-chip">赛道 <b>${r.track}</b></span>
+      <span class="x-chip">初始 harness <b>${r.harness}</b></span>
+      <span class="x-chip">目标模型 <b>${r.target}</b></span>
+      <span class="x-chip">运行 <b>${r.job}</b></span>
+      <span class="x-chip">状态 <b style="color:var(--ok)">${r.status}</b></span></div>
+    <div class="x-kpis">
+      <div class="x-kpi"><div class="k">基线 → 官方</div><div class="v">${(r.base*100).toFixed(1)}<small>→</small><span class="x-good">${(r.score*100).toFixed(1)}</span></div></div>
+      <div class="x-kpi"><div class="k">差距弥合</div><div class="v x-good">+${pct(g)}<small>%</small></div></div>
+      <div class="x-kpi"><div class="k">步数</div><div class="v">${r.n}</div></div>
+      <div class="x-kpi"><div class="k">实际耗时</div><div class="v">${fmtDur(r.dur)}</div></div>
+      <div class="x-kpi"><div class="k">编排器成本</div><div class="v">${r.cost?"$"+r.cost.toFixed(1):"—"}<small>${r.cost?Math.round(r.cost/r.budget*100)+"%":""}</small></div></div>
+      <div class="x-kpi"><div class="k">工具错误</div><div class="v" style="color:${r.errs?"var(--bad)":"var(--ink)"}">${r.errs}</div></div>
+    </div>`;
+  document.getElementById("x-tools").innerHTML=bars;
+  document.getElementById("x-stats").innerHTML=`
+    <div>输入 token<b>${fmtNum(r.tok_in)}</b></div>
+    <div>缓存命中<b>${fmtNum(r.tok_cache)} · ${Math.round(r.tok_cache/Math.max(1,r.tok_in)*100)}%</b></div>
+    <div>输出 token<b>${fmtNum(r.tok_out)}</b></div>
+    <div>单步平均输入<b>${fmtNum(Math.round(r.tok_in/Math.max(1,r.n)))}</b></div>
+    <div>等待 / 轮询<b>${waits} 步 · ${Math.round(waits/r.n*100)}%</b></div>
+    <div>单次最大上下文<b>${fmtNum(peak)}</b></div>`;
+  document.getElementById("x-how").innerHTML=`
+    1. <b>灰色叙述</b>是智能体自述，串起来是它的研究思路。<br>
+    2. <b style="color:#9ec4b4">绿色命令</b>是实际执行的动作，<b style="color:#9a968d">灰底</b>是环境返回。<br>
+    3. 标 <span class="tagx" style="color:#e2b25d;border-color:#e2b25d55">评测</span> 的步骤会调基准服务；<span class="tagx" style="color:#f2766a;border-color:#f2766a55">错误</span> 表示该步工具失败。<br>
+    4. 上方节奏条看“时间花在哪”：长串 sleep 表示在等异步训练/评测。<br>
+    5. 提示：<b>编排器成本</b>不等于平台账户消耗，后者只在 <code>/v1/balance</code> 里（见深读 §07 C13）。`;
+  document.getElementById("x-score").innerHTML=scorePanel(r);
+
+  const leg=[["#8fc7bd","Bash"],["#8fa8d6","Read"],["#e2b25d","Write/Edit"],["#b6a3e8","Web"],["#e08fb0","子代理"],["#88c49c","Skill"],["#a3a097","纯叙述"],["#6f6c65","sleep"]];
+  document.getElementById("x-leg").innerHTML=leg.map(([c,n])=>`<span><i style="background:${c}"></i>${n}</span>`).join("");
+
+  const chips=[...new Set(r.steps.map(s=>catOf(toolOf(s))))].filter(c=>c!=="System"&&c!=="Narrate");
+  const order=["Bash","Read","Write","Web","Agent","Skill","sleep","User","Other"];
+  chips.sort((a,b)=>order.indexOf(a)-order.indexOf(b));
+  document.getElementById("x-chips").innerHTML=chips.map(c=>
+    `<button class="x-fbtn${S.tools.has(c)?" on":""}" data-cat="${c}" style="--c:${catColor(c)}"><span class="sw"></span>${DISP[c]||c}</button>`).join("");
+  document.querySelectorAll("[data-cat]").forEach(b=>b.onclick=()=>{
+    const c=b.dataset.cat;S.tools.has(c)?S.tools.delete(c):S.tools.add(c);
+    b.classList.toggle("on");applyFilter()});
+  const setF=(id,key)=>{const el=document.getElementById(id);el.classList.toggle("on",S[key]);
+    el.onclick=()=>{S[key]=!S[key];el.classList.toggle("on",S[key]);applyFilter()}};
+  setF("x-narr","narr");setF("x-err","onlyErr");setF("x-eval","onlyEval");
+  const q=document.getElementById("x-q");q.value=S.q;let t=null;
+  q.oninput=e=>{clearTimeout(t);t=setTimeout(()=>{S.q=e.target.value.trim();applyFilter()},160)};
+
+  document.getElementById("x-foot").innerHTML=`源文件 <span style="font-family:var(--mono)">${r.name}.json</span> · sha256 ${r.rec_sha}… · 文本为原文截断展示，点击卡片展开（上限 1.4k / 1.1k / 2.4k 字符）`;
+  drawStrip();applyFilter();
+}
+
+function scoreSeries(r){
+  const seen=new Set(),pts=[];
+  (r.steps||[]).forEach(s=>{const o=s.obs;if(!o)return;let m;
+    const re1=/pass@1\s*=\s*([0-9]*\.?[0-9]+)/g;
+    while((m=re1.exec(o))!==null){const k="p"+s.i+m[1];if(seen.has(k))continue;seen.add(k);pts.push({i:s.i,v:parseFloat(m[1]),k:"pass@1"})}
+    const re2=/maj@(\d+)\s*=\s*([0-9]*\.?[0-9]+)/g;
+    while((m=re2.exec(o))!==null){const k="m"+s.i+m[1];if(seen.has(k))continue;seen.add(k);pts.push({i:s.i,v:parseFloat(m[2]),k:"maj"})}});
+  return pts.filter(p=>p.v>=0&&p.v<=1);
+}
+function scorePanel(r){
+  const pts=scoreSeries(r);if(pts.length<4)return "";
+  const n=r.steps.length,W=1120,H=190,L=44,R=16,T=14,B=26;
+  const x=i=>L+(i/Math.max(1,n-1))*(W-L-R),y=v=>T+(1-v)*(H-T-B);
+  let s=`<div class="x-panel" style="margin-bottom:16px"><h2>研究过程中的本地自评分 · ${pts.length} 个点</h2>
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto">`;
+  [0,.25,.5,.75,1].forEach(v=>{s+=`<line x1="${L}" y1="${y(v)}" x2="${W-R}" y2="${y(v)}" stroke="#242320"/>
+    <text x="${L-8}" y="${y(v)+3.5}" fill="#827f76" font-size="9.5" text-anchor="end" font-family="IBM Plex Mono,monospace">${(v*100).toFixed(0)}</text>`});
+  s+=`<line x1="${L}" y1="${y(r.base)}" x2="${W-R}" y2="${y(r.base)}" stroke="#e2b25d" stroke-dasharray="4 4" opacity=".6"/>
+      <text x="${W-R}" y="${y(r.base)-5}" fill="#e2b25d" font-size="9.5" text-anchor="end" font-family="IBM Plex Mono,monospace">基线 ${(r.base*100).toFixed(1)}</text>
+      <line x1="${L}" y1="${y(r.score)}" x2="${W-R}" y2="${y(r.score)}" stroke="#88c49c" stroke-dasharray="4 4" opacity=".6"/>
+      <text x="${W-R}" y="${y(r.score)-5}" fill="#88c49c" font-size="9.5" text-anchor="end" font-family="IBM Plex Mono,monospace">官方 ${(r.score*100).toFixed(1)}</text>`;
+  const P=pts.filter(p=>p.k==="pass@1"),M=pts.filter(p=>p.k!=="pass@1");
+  const sorted=P.slice().sort((a,b)=>a.i-b.i);let best=-1,line=[];
+  sorted.forEach(p=>{if(p.v>best){best=p.v;line.push(p)}});
+  if(line.length>1)s+=`<polyline points="${line.map(p=>x(p.i)+","+y(p.v)).join(" ")}" fill="none" stroke="#9ca4ff" stroke-opacity=".5" stroke-width="1.4"/>`;
+  M.forEach(p=>{s+=`<rect x="${x(p.i)-2.2}" y="${y(p.v)-2.2}" width="4.4" height="4.4" rx="1" fill="#c9a0ff" opacity=".8"/>`});
+  P.forEach(p=>{s+=`<circle cx="${x(p.i)}" cy="${y(p.v)}" r="2.6" fill="#9ca4ff" opacity=".85"/>`});
+  const bp=P.slice().sort((a,b)=>b.v-a.v)[0];
+  if(bp){const ly=y(bp.v)<T+22?y(bp.v)+15:y(bp.v)-8;
+    s+=`<circle cx="${x(bp.i)}" cy="${y(bp.v)}" r="4.4" fill="none" stroke="#9ca4ff" stroke-width="1.2"/>
+    <text x="${Math.min(x(bp.i)+8,W-R-96)}" y="${ly}" fill="#bcc1ff" font-size="10" font-family="IBM Plex Mono,monospace">峰值 ${(bp.v*100).toFixed(1)} @#${bp.i}</text>`}
+  s+=`</svg><div style="color:var(--faint);font-size:11px;margin-top:6px;line-height:1.7">
+    蓝点 = pass@1，紫点 = maj@k。自评通常高于官方，因为多在小子集、单次尝试上测得。</div></div>`;
+  return s;
+}
+
+function drawStrip(){
+  const r=RUNS[cur],steps=r.steps;
+  const bc=document.getElementById("x-barcode"),cx=document.getElementById("x-ctx");
+  if(!bc)return;
+  const dpr=devicePixelRatio||1,W=bc.clientWidth||900;
+  bc.width=W*dpr;bc.height=26*dpr;bc.style.height="26px";
+  const g=bc.getContext("2d");g.scale(dpr,dpr);g.clearRect(0,0,W,26);
+  const bw=W/steps.length;
+  steps.forEach((s,i)=>{const c=catColor(catOf(toolOf(s)));g.fillStyle=c;g.globalAlpha=.85;
+    const h=5+Math.min(14,(s.tools||[]).length*3.5);
+    g.fillRect(i*bw,26-h,Math.max(1,bw-.35),h);
+    if(s.err){g.globalAlpha=1;g.fillStyle="#f2766a";g.fillRect(i*bw,0,Math.max(1,bw-.35),2)}});
+  g.globalAlpha=1;
+  const H=62;cx.width=W*dpr;cx.height=H*dpr;cx.style.height=H+"px";
+  const c=cx.getContext("2d");c.scale(dpr,dpr);c.clearRect(0,0,W,H);
+  const pts=steps.map((s,i)=>[i,s.pin||0]).filter(p=>p[1]>0);
+  if(pts.length>1){
+    const mx=Math.max(...pts.map(p=>p[1]));
+    const x=i=>i/steps.length*W,y=v=>H-7-(v/mx)*(H-16);
+    c.beginPath();c.moveTo(x(pts[0][0]),H-7);
+    pts.forEach(p=>c.lineTo(x(p[0]),y(p[1])));c.lineTo(x(pts[pts.length-1][0]),H-7);c.closePath();
+    const gr=c.createLinearGradient(0,0,0,H);gr.addColorStop(0,"#9ca4ff45");gr.addColorStop(1,"#9ca4ff00");
+    c.fillStyle=gr;c.fill();
+    c.beginPath();pts.forEach((p,k)=>k?c.lineTo(x(p[0]),y(p[1])):c.moveTo(x(p[0]),y(p[1])));
+    c.strokeStyle="#9ca4ff";c.lineWidth=1.1;c.stroke();
+    c.fillStyle="#827f76";c.font="9px IBM Plex Mono,monospace";
+    c.fillText("上下文峰值 "+fmtNum(mx),4,10);
+  }
+  const tip=document.getElementById("tip2"),info=document.getElementById("x-hover");
+  bc.onmousemove=e=>{const rect=bc.getBoundingClientRect();
+    const i=Math.max(0,Math.min(steps.length-1,Math.floor((e.clientX-rect.left)/rect.width*steps.length)));
+    const s=steps[i];tip.style.display="block";tip.style.left=(e.clientX+14)+"px";tip.style.top=(e.clientY+16)+"px";
+    tip.innerHTML=`#${s.i} · ${toolOf(s)} · ${s.pin?fmtNum(s.pin)+" tok":"—"}<br><span style="color:#a3a097">${esc(((s.msg||"")||(s.tools&&s.tools[0]?s.tools[0].a:"")).slice(0,90))}</span>`;
+    info.textContent=`#${s.i} ${toolOf(s)}`};
+  bc.onmouseleave=()=>{tip.style.display="none";info.textContent="悬停查看 · 点击跳转"};
+  bc.onclick=e=>{const rect=bc.getBoundingClientRect();
+    jumpTo(Math.max(0,Math.min(steps.length-1,Math.floor((e.clientX-rect.left)/rect.width*steps.length))))};
+}
+
+const stepText=s=>s._t||(s._t=[s.msg||"",s.think||"",s.obs||"",(s.tools||[]).map(t=>t.a).join(" ")].join("\n").toLowerCase());
+function applyFilter(){
+  const r=RUNS[cur],q=S.q.toLowerCase();
+  S.filtered=r.steps.filter(s=>{
+    const cat=catOf(toolOf(s));
+    if(S.tools.size&&!S.tools.has(cat))return false;
+    if(S.narr&&(!s.msg||s.msg.length<25))return false;
+    if(S.onlyErr&&!s.err)return false;
+    if(S.onlyEval){const a=(s.tools||[]).map(t=>t.a).join(" ");if(!EVAL_RE.test(a))return false}
+    if(q&&stepText(s).indexOf(q)<0)return false;
+    return true});
+  S.rendered=0;S.start=0;
+  const tl=document.getElementById("x-tl");
+  tl.innerHTML="";
+  document.getElementById("x-cnt").textContent=`${S.filtered.length} / ${r.steps.length} 步`;
+  if(!S.filtered.length){tl.innerHTML='<div class="x-empty">没有符合条件的步骤 — 清空筛选或换个关键词。</div>';return}
+  renderChunk();
+}
+function renderChunk(){
+  const tl=document.getElementById("x-tl");
+  if(tl.children.length===0&&S.start>0){
+    tl.insertAdjacentHTML("afterbegin",`<div class="x-marker">已折叠前面 ${S.start} 步 · <a href="javascript:void(0)" id="x-top">回到开头</a></div>`);
+    const a=document.getElementById("x-top");
+    if(a)a.onclick=()=>{S.start=0;S.rendered=0;tl.innerHTML="";renderChunk();scrollTo({top:0,behavior:"smooth"})};
+  }
+  const end=Math.min(S.filtered.length,S.rendered+60),frag=[];
+  for(let k=S.rendered;k<end;k++)frag.push(stepCard(S.filtered[k]));
+  tl.insertAdjacentHTML("beforeend",frag.join(""));
+  S.rendered=end;
+  tl.querySelectorAll(".x-card:not([data-b])").forEach(c=>{c.dataset.b="1";c.addEventListener("click",e=>{
+    if(e.target.tagName==="A")return;c.classList.toggle("open")})});
+  const sen=document.getElementById("x-sent");
+  if(S.rendered>=S.filtered.length)sen.style.display="none";
+  else{sen.style.display="block";if(!sen._o){sen._o=new IntersectionObserver(es=>{if(es[0].isIntersecting)renderChunk()},{rootMargin:"600px"});sen._o.observe(sen)}}
+}
+function tlabel(s){if(s.t==null)return"";const h=Math.floor(s.t/3600),m=Math.floor(s.t%3600/60);
+  return h>0?`+${h}h${String(m).padStart(2,"0")}m`:`+${m}m${String(s.t%60).padStart(2,"0")}s`}
+function stepCard(s){
+  const tool=toolOf(s),cat=catOf(tool),col=catColor(cat);
+  const tags=tagsOf(s).map(([t,c])=>`<span class="tagx" style="color:${c};border-color:${c}55">${t}</span>`).join("");
+  let body="";
+  if(s.msg)body+=`<div class="said">${esc(s.msg)}</div>`;
+  if(s.think)body+=`<div class="think"><div class="lb">thinking</div><p>${esc(s.think)}</p></div>`;
+  if(s.tools&&s.tools.length)s.tools.forEach(t=>{
+    const pre=(t.n==="Bash"||t.n==="exec")?"$ ":`${t.n} `;
+    body+=`<pre class="cmd"><span class="d">${esc(pre)}</span>${esc(t.a)}</pre>`});
+  if(s.obs)body+=`<pre class="obs${s.err?" err":""}">${esc(s.obs)}</pre>`;
+  const long=((s.msg||"").length+(s.think||"").length+(s.obs||"").length)>420;
+  const lbl=s.tools&&s.tools.length>1?`${tool} ×${s.tools.length}`:(DISP[tool]||tool);
+  return `<div class="x-step" id="x-s-${s.i}" style="--bar:${col}">
+    <div class="x-gut"><div class="ln"></div><div class="pt"></div><div class="ix">${s.i}</div></div>
+    <div class="x-card${cat==="System"?" sys":""}" data-i="${s.i}">
+      <div class="hd"><span class="tool" style="--bar:${col}">${lbl}</span>${tags}<span class="t">${tlabel(s)}${s.pin?" · "+fmtNum(s.pin)+" tok":""}</span></div>
+      <div class="bd">${body}${long?'<button class="more">展开 / 收起</button>':""}</div>
+    </div></div>`;
+}
+function jumpTo(i){
+  const tl=document.getElementById("x-tl");
+  let pos=S.filtered.findIndex(s=>s.i===i);
+  if(pos<0){S.tools.clear();S.narr=false;S.onlyErr=false;S.onlyEval=false;S.q="";
+    document.getElementById("x-q").value="";
+    document.querySelectorAll("[data-cat]").forEach(b=>b.classList.remove("on"));
+    ["x-narr","x-err","x-eval"].forEach(id=>document.getElementById(id).classList.remove("on"));
+    applyFilter();pos=S.filtered.findIndex(s=>s.i===i)}
+  if(pos<0)return;
+  S.start=Math.max(0,pos-10);S.rendered=S.start;tl.innerHTML="";renderChunk();
+  const el=document.getElementById("x-s-"+i);
+  if(el){el.scrollIntoView({block:"center",behavior:"smooth"});el.querySelector(".x-card").classList.add("open");
+    el.classList.add("onpt");setTimeout(()=>el.classList.remove("onpt"),1500)}
+}
+addEventListener("resize",()=>{if(RUNS.length)drawStrip()});
+</script>
+</body>
+</html>
